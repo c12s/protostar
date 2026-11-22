@@ -7,6 +7,7 @@ import (
 	"health-check/config"
 	"health-check/domain"
 	"log"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -88,8 +89,12 @@ func NewPrometheusService(ns *nats.Conn, nodes *config.NodeConfig, prometheusReg
 //}
 
 func (ps *PrometheusService) ScheduleNatsRequest() {
+	interval := os.Getenv("HEALTH_CHECK_INTERVAL")
+	if interval == "" {
+		interval = "15s"
+	}
 	c := cron.New()
-	_, err := c.AddFunc("@every 1s", func() {
+	_, err := c.AddFunc("@every "+interval, func() {
 		for nodeId := range ps.nodes.GetNodes() {
 			log.Printf("****** HEALTH CHECK STARTED FOR NODE ID=%s ******\n", nodeId)
 			subject := fmt.Sprintf("%s.metrics", nodeId)
